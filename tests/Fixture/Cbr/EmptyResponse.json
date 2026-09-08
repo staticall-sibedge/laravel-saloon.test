@@ -1,0 +1,22 @@
+{
+    "statusCode": 200,
+    "headers": {
+        "Server": "nginx\/1.22.1",
+        "Date": "Tue, 08 Sep 2026 14:21:23 GMT",
+        "Content-Type": "application\/javascript; charset=utf-8",
+        "Content-Length": "7605",
+        "Last-Modified": "Tue, 08 Sep 2026 14:00:00 GMT",
+        "Connection": "keep-alive",
+        "Vary": "Accept-Encoding",
+        "Expires": "Tue, 08 Sep 2026 16:21:23 GMT",
+        "Cache-Control": "max-age=7200",
+        "Referrer-Policy": "origin",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Max-Age": "31536000",
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+        "Link": "<https:\/\/www.cbr-xml-daily.ru\/>; rel=\"canonical\"",
+        "Accept-Ranges": "bytes"
+    },
+    "data": "",
+    "context": []
+}
