@@ -16,6 +16,7 @@ use Saloon\Laravel\Facades\Saloon;
 use Tests\Fixture\Nbrb\EmptyResponseFixture;
 use Tests\Fixture\Nbrb\InvalidExchangeRateNegativeFixture;
 use Tests\Fixture\Nbrb\InvalidExchangeRateUnknownCurrencyFixture;
+use Tests\Fixture\Nbrb\InvalidExchangeRateUnknownCurrencyWithCorrectFixture;
 use Tests\Fixture\Nbrb\InvalidExchangeRateZeroFixture;
 use Tests\Fixture\Nbrb\ValidExchangeRateMultipleFixture;
 use Tests\Fixture\Nbrb\ValidExchangeRateSingleFixture;
@@ -110,6 +111,33 @@ final class SaloonTest extends TestCase
         $job->handle();
 
         $this->assertDatabaseCount($exchangeRateTable, 0);
+    }
+
+    public function testShouldHandleInvalidExchangeRateUnknownCurrencyWithCorrect(): void
+    {
+        Saloon::fake([
+            TestableRequest::class => new InvalidExchangeRateUnknownCurrencyWithCorrectFixture(),
+        ]);
+
+        $exchangeRate = new ExchangeRate();
+        $exchangeRateTable = $exchangeRate->getTable();
+        unset($exchangeRate);
+
+        $this->assertDatabaseCount($exchangeRateTable, 0);
+
+        $job = new TestableJob();
+
+        $job->handle();
+
+        $this->assertDatabaseCount($exchangeRateTable, 1);
+
+        /** @var ExchangeRate $rate */
+        $rate = ExchangeRate::firstOrFail();
+
+        self::assertSame(CurrencyEnum::BYN, $rate->{ExchangeRate::COLUMN_CURRENCY_FROM});
+        self::assertSame(CurrencyEnum::CAD, $rate->{ExchangeRate::COLUMN_CURRENCY_TO});
+        self::assertSame(2.2181, $rate->{ExchangeRate::COLUMN_RATE});
+        self::assertSame('2026-09-08', $rate->{ExchangeRate::COLUMN_DATE}->format('Y-m-d'));
     }
 
     public function testShouldHandleSingleValidExchangeRate(): void
