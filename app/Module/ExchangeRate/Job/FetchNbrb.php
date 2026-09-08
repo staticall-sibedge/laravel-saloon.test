@@ -5,7 +5,6 @@ namespace App\Module\ExchangeRate\Job;
 use App\Job\JobAbstract;
 use App\Module\ExchangeRate\Api\Nbrb\NbrbConnector;
 use App\Module\ExchangeRate\Api\Nbrb\NbrbDailyRequest;
-use Saloon\Http\Response;
 
 final class FetchNbrb extends JobAbstract
 {

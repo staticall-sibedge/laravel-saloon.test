@@ -2,16 +2,12 @@
 
 namespace App\Module\Queue\Job;
 
-use Illuminate\Queue\Jobs\JobName;
 use VladimirYuldashev\LaravelQueueRabbitMQ\Queue\Jobs\RabbitMQJob as BaseJob;
 
 class RabbitMqBaseJob extends BaseJob
 {
-
     /**
      * Fire the job.
-     *
-     * @return void
      */
     public function fire(): void
     {

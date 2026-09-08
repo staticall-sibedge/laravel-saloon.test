@@ -20,9 +20,7 @@ final class NbrbDailyRequest extends Request
 
     public function __construct(
         private readonly DateTimeInterface|string|null $dateAt = null,
-    )
-    {
-    }
+    ) {}
 
     public function resolveEndpoint(): string
     {
@@ -105,6 +103,7 @@ final class NbrbDailyRequest extends Request
      *     Cur_Name: string,
      *     Cur_OfficialRate: float,
      * } $rateEntry
+     *
      * @throws InvalidExchangeRateEntryException
      */
     private function validateRateEntry(array $rateEntry): void

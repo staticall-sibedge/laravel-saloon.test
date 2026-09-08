@@ -95,6 +95,7 @@ final class CbrDailyRequest extends Request
      *     Value: float,
      *     Previous: float,
      * } $rateEntry
+     *
      * @throws InvalidExchangeRateEntryException
      */
     private function validateRateEntry(array $rateEntry): void

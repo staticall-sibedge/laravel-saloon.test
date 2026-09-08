@@ -3,16 +3,16 @@
 namespace Tests\Unit\Module\ExchangeRate\Api\Cbr;
 
 use App\Models\ExchangeRate;
+use App\Module\ExchangeRate\Api\Cbr\CbrDailyRequest as TestableRequest;
 use App\Module\ExchangeRate\Enum\CurrencyEnum;
 use App\Module\ExchangeRate\Exception\InvalidExchangeRateEntryException;
 use App\Module\ExchangeRate\Job\FetchCbr as TestableJob;
-use App\Module\ExchangeRate\Api\Cbr\CbrDailyRequest as TestableRequest;
 use App\Module\ExchangeRate\Service\ExchangeRateService;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
-use Saloon\Laravel\Facades\Saloon;
 use Saloon\Http\Faking\MockClient;
+use Saloon\Laravel\Facades\Saloon;
 use Tests\Fixture\Cbr\EmptyResponseFixture;
 use Tests\Fixture\Cbr\InvalidExchangeRateNegativeFixture;
 use Tests\Fixture\Cbr\InvalidExchangeRateUnknownCurrencyFixture;

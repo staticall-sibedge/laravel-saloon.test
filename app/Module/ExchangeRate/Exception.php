@@ -7,6 +7,4 @@ use App\Module\Exception as BaseException;
 /**
  * All exchange rate related exceptions must use this exception class
  */
-abstract class Exception extends BaseException
-{
-}
+abstract class Exception extends BaseException {}

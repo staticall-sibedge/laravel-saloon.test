@@ -6,6 +6,7 @@ use App\Action\FetchExchangeRatesAction;
 use Carbon\CarbonImmutable;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Attribute\AsCommand;
+
 use function Laravel\Prompts\intro;
 use function Laravel\Prompts\outro;
 

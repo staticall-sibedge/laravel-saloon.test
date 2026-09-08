@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Module\ExchangeRate\Enum\CurrencyEnum;
 use App\Module\ExchangeRate\Repository\ExchangeRateRepository;
-use App\Repository\RepositoryInterface;
 use Database\Factories\ExchangeRateFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,7 +14,6 @@ class ExchangeRate extends ModelAbstract
 {
     /** @use HasFactory<ExchangeRateFactory> */
     use HasFactory, Notifiable;
-
     public const string COLUMN_CURRENCY_FROM = 'currency_from';
     public const string COLUMN_CURRENCY_TO = 'currency_to';
     public const string COLUMN_RATE = 'rate';

@@ -4,6 +4,4 @@ namespace App\Module\ExchangeRate\Exception;
 
 use App\Module\ExchangeRate\Exception;
 
-final class InvalidExchangeRateEntryException extends Exception
-{
-}
+final class InvalidExchangeRateEntryException extends Exception {}

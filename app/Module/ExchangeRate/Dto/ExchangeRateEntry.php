@@ -13,9 +13,7 @@ final class ExchangeRateEntry implements JsonSerializable
         private readonly CurrencyEnum $currencyTo,
         private readonly float $rate,
         private readonly DateTimeInterface $date,
-    )
-    {
-    }
+    ) {}
 
     public function getCurrencyFrom(): CurrencyEnum
     {
