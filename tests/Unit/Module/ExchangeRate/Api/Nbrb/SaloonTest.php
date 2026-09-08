@@ -191,7 +191,14 @@ final class SaloonTest extends TestCase
 
         $exchangeRateTable = $exchangeRate->getTable();
 
-        Cache::add(ExchangeRateService::getCacheKey($exchangeRate->{ExchangeRate::COLUMN_CURRENCY_FROM}->value, $exchangeRate->{ExchangeRate::COLUMN_CURRENCY_TO}->value, $exchangeRate->{ExchangeRate::COLUMN_DATE}->format('Y-m-d')), true);
+        Cache::add(
+            ExchangeRateService::getCacheKey(
+                $exchangeRate->{ExchangeRate::COLUMN_CURRENCY_FROM}->value,
+                $exchangeRate->{ExchangeRate::COLUMN_CURRENCY_TO}->value,
+                $exchangeRate->{ExchangeRate::COLUMN_DATE}->format('Y-m-d'),
+            ),
+            true,
+        );
 
         $this->assertDatabaseCount($exchangeRateTable, 1);
 

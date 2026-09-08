@@ -20,7 +20,7 @@ class RabbitMqBaseJob extends BaseJob
             return;
         }
 
-        $class = WhatheverClassNameToExecute::class;
+        $class = CustomRabbitMqJob::class;
         $method = 'handle';
 
         ($this->instance = $this->resolve($class))->{$method}($this, $payload);

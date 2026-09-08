@@ -1,0 +1,42 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - app
+        - routes
+        - config
+        - tests
+
+    # The level 9 is the highest level
+    level: 5
+
+    tips:
+        treatPhpDocTypesAsCertain: false
+
+    # https://github.com/larastan/larastan/blob/2.x/docs/errors-to-ignore.md
+    ignoreErrors:
+        -
+            identifier: identical.alwaysFalse
+            path: app/Module/ExchangeRate/Api/Nbrb/NbrbDailyRequest.php
+        -
+            identifier: argument.type
+            path: app/Module/ExchangeRate/Api/Nbrb/NbrbDailyRequest.php
+        -
+            identifier: argument.type
+            path: app/Module/ExchangeRate/Api/Cbr/CbrDailyRequest.php
+        -
+            identifier: identical.alwaysFalse
+            path: app/Module/ExchangeRate/Api/Cbr/CbrDailyRequest.php
+        -
+            identifier: function.alreadyNarrowedType
+            path: app/
+        -
+            identifier: method.nonObject
+            path: tests/
+        -
+            identifier: property.nonObject
+            path: tests/
+        -
+            identifier: staticMethod.notFound
+            path: tests/CreatesApplication.php
