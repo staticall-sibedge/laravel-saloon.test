@@ -1,0 +1,96 @@
+version: '3.1'
+services:
+    application:
+        build: docker/php
+        working_dir: /application
+        volumes:
+            - '.:/application'
+            - './docker/php/conf.d/99-overrides.ini:/etc/php/8.4/fpm/conf.d/99-overrides.ini'
+            - './docker/php/conf.d/99-overrides.ini:/etc/php/8.4/cli/conf.d/99-overrides.ini'
+
+    webserver:
+        image: 'dunglas/frankenphp:latest'
+        restart: always
+        working_dir: /application
+        volumes:
+            - '.:/application'
+            - './docker/webserver/frankenphp/Caddyfile.d:/etc/frankenphp/Caddyfile.d'
+        ports:
+            - '80:80'
+            - '443:443'
+            - '443:443/udp'
+        depends_on:
+            - application
+            - mysql
+            - rabbitmq
+
+    mysql:
+        image: 'mysql:8.0'
+        working_dir: /application
+        volumes:
+            - 'mysql-data:/var/lib/mysql/'
+        environment:
+            - MYSQL_ROOT_PASSWORD=-
+            - MYSQL_DATABASE='${DB_DATABASE}'
+            - MYSQL_USER='${DB_USERNAME}'
+            - MYSQL_PASSWORD='${DB_PASSWORD}'
+        ports:
+            - '42002:3306'
+        healthcheck:
+            test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+            interval: 20s
+            timeout: 20s
+            retries: 5
+
+    elasticsearch:
+        image: 'elasticsearch:6.5.4'
+        volumes:
+            - 'elasticsearch-data:/var/lib/elasticsearch/'
+            - './docker/search/elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml'
+        ports:
+            - '9200:9200'
+        healthcheck:
+            test: ['CMD', 'curl -fs http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s || exit 1']
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+    clickhouse:
+        image: 'clickhouse/clickhouse-server:latest'
+        volumes:
+            - 'clickhouse-data:/var/lib/clickhouse/'
+            - './docker/database/clickhouse/config.xml:/etc/clickhouse-server/config.d/docker.xml'
+            - './docker/database/clickhouse/users.xml:/etc/clickhouse-server/users.d/docker.xml'
+        ulimits:
+            nofile:
+                soft: 262144
+                hard: 262144
+        healthcheck:
+            test: ['CMD', 'clickhouse-client', '--query', 'SELECT 1']
+            interval: 10s
+            timeout: 10s
+            retries: 3
+
+    rabbitmq:
+        image: 'rabbitmq:3-management'
+        container_name: rabbitmq
+        environment:
+            - RABBITMQ_NODENAME='rabbit@rabbitmq'
+            - RABBITMQ_CONFIG_FILE='/etc/rabbitmq/rabbitmq.conf'
+        volumes:
+            - 'rabbitmq-data:/var/lib/rabbitmq/'
+            - './docker/queue/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf'
+        ports:
+            - '5672:5672'
+            - '15672:15672'
+        healthcheck:
+            test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping']
+            interval: 30s
+            timeout: 30s
+            retries: 3
+
+volumes:
+    mysql-data:
+    elasticsearch-data:
+    rabbitmq-data:
+    clickhouse-data:
