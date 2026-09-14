@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('exchange-rate')->group(static function () {
     Route::get('', [ExchangeRateController::class, 'showAction']);
+    Route::get('convert', [ExchangeRateController::class, 'convertAction']);
+    Route::get('all', [ExchangeRateController::class, 'parseAllAction']);
     Route::post('', [ExchangeRateController::class, 'parseAllAction']);
     Route::post('cbr', [ExchangeRateController::class, 'cbrAction']);
     Route::post('nbrb', [ExchangeRateController::class, 'nbrbAction']);

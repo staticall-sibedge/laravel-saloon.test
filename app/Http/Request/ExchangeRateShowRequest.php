@@ -9,10 +9,18 @@ final class ExchangeRateShowRequest extends FormRequest
 {
     public function rules(): array
     {
-        $rules = [
+        return [
             'date' => [Rule::date()],
         ];
+    }
 
-        return $rules;
+    public function bodyParameters(): array
+    {
+        return [
+            'date' => [
+                'description' => 'See exchange rates for a specific date, in YYYY-MM-DD format',
+                'example' => '2019-09-10',
+            ],
+        ];
     }
 }

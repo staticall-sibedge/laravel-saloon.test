@@ -37,7 +37,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $app = app();
         $testingOnly = $app->runningUnitTests() === false;
-        $localOnly = !$app->isLocal();
+        $localOnly = $app->isLocal() === false;
 
         // allow only on test
         DB::prohibitDestructiveCommands($testingOnly);

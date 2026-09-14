@@ -12,6 +12,9 @@
     "version": "0.1.0",
     "require": {
         "php": "^8.4",
+        "ext-bcmath": "*",
+        "ext-pdo": "*",
+        "knuckleswtf/scribe": "^5.11",
         "laravel/framework": "^13.17",
         "laravel/tinker": "^3.0",
         "saloonphp/laravel-plugin": "^5.0",
@@ -46,14 +49,6 @@
         }
     },
     "scripts": {
-        "setup": [
-            "composer install",
-            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
-            "@php artisan key:generate",
-            "@php artisan migrate --force",
-            "npm install --ignore-scripts",
-            "npm run build"
-        ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
             "npx concurrently -c \"#93c5fd,#c4b5fd,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"npm run dev\" --names='server,queue,vite'"

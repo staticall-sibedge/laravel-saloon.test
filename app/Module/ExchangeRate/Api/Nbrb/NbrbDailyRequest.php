@@ -29,7 +29,7 @@ final class NbrbDailyRequest extends Request
 
     public function createDtoFromResponse(Response $response): Collection
     {
-        $currencyFrom = CurrencyEnum::BYN;
+        $currencyTo = CurrencyEnum::BYN;
         /**
          * @var array{
          *     Cur_ID: int,
@@ -64,7 +64,7 @@ final class NbrbDailyRequest extends Request
             // if we can't map 'currencyTo' value, means we don't want it at this moment, so skip is safe
             // we can easily add it to 'CurrencyEnum' class, and it will be added on the next fetch
             try {
-                $currencyTo = CurrencyEnum::from($rateEntry['Cur_Abbreviation'] === 'RUR' ? 'RUB' : $rateEntry['Cur_Abbreviation']);
+                $currencyFrom = CurrencyEnum::from(NbrbCurrencyMapper::convert($rateEntry['Cur_Abbreviation']));
             } catch (ValueError) {
                 Log::notice('Unknown currency, ' . $rateEntry['Cur_Abbreviation']);
 
@@ -109,7 +109,7 @@ final class NbrbDailyRequest extends Request
     private function validateRateEntry(array $rateEntry): void
     {
         if (array_key_exists('Cur_Abbreviation', $rateEntry) === false) {
-            throw new InvalidExchangeRateEntryException('Unknown "currency to" value');
+            throw new InvalidExchangeRateEntryException('Unknown "currency from" value');
         }
 
         if (array_key_exists('Cur_OfficialRate', $rateEntry) === false) {
