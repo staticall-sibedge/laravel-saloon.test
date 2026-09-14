@@ -16,4 +16,8 @@ enum CurrencyEnum: string
     case CAD = 'CAD';
     case EUR = 'EUR';
     case USD = 'USD';
+    case ALL = 'ALL';
+    case AOA = 'AOA';
+    case AZN = 'AZN';
+    case COP = 'COP';
 }

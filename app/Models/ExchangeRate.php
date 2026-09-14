@@ -2,14 +2,17 @@
 
 namespace App\Models;
 
+use App\Http\Resource\ExchangeRateCollection;
 use App\Module\ExchangeRate\Enum\CurrencyEnum;
 use App\Module\ExchangeRate\Repository\ExchangeRateRepository;
 use Database\Factories\ExchangeRateFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\UseResourceCollection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable([ExchangeRate::COLUMN_CURRENCY_FROM, ExchangeRate::COLUMN_CURRENCY_TO, 'rate', 'date'])]
+#[UseResourceCollection(ExchangeRateCollection::class)]
+#[Fillable([ExchangeRate::COLUMN_CURRENCY_FROM, ExchangeRate::COLUMN_CURRENCY_TO, ExchangeRate::COLUMN_RATE, ExchangeRate::COLUMN_DATE])]
 class ExchangeRate extends ModelAbstract
 {
     /** @use HasFactory<ExchangeRateFactory> */
@@ -30,6 +33,7 @@ class ExchangeRate extends ModelAbstract
             'date' => 'datetime',
             'currency_from' => CurrencyEnum::class,
             'currency_to' => CurrencyEnum::class,
+            'rate' => 'float',
         ];
     }
 

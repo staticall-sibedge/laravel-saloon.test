@@ -24,7 +24,7 @@ final class CbrDailyRequest extends Request
 
     public function createDtoFromResponse(Response $response): Collection
     {
-        $currencyFrom = CurrencyEnum::RUB;
+        $currencyTo = CurrencyEnum::RUB;
         /**
          * @var array{
          *     Date: string,
@@ -65,7 +65,7 @@ final class CbrDailyRequest extends Request
             // if we can't map 'currencyTo' value, means we don't want it at this moment, so skip is safe
             // we can easily add it to 'CurrencyEnum' class, and it will be added on the next fetch
             try {
-                $currencyTo = CurrencyEnum::from($rateEntry['CharCode']);
+                $currencyFrom = CurrencyEnum::from($rateEntry['CharCode']);
             } catch (ValueError) {
                 Log::notice('Unknown currency, ' . $rateEntry['CharCode']);
 

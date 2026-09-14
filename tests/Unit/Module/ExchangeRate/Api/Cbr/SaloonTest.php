@@ -9,7 +9,7 @@ use App\Module\ExchangeRate\Exception\InvalidExchangeRateEntryException;
 use App\Module\ExchangeRate\Job\FetchCbr as TestableJob;
 use App\Module\ExchangeRate\Service\ExchangeRateService;
 use Carbon\CarbonImmutable;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Saloon\Http\Faking\MockClient;
 use Saloon\Laravel\Facades\Saloon;
@@ -24,7 +24,7 @@ use Tests\TestCase;
 
 final class SaloonTest extends TestCase
 {
-    use RefreshDatabase;
+    use LazilyRefreshDatabase;
 
     protected function setUp(): void
     {
@@ -134,8 +134,8 @@ final class SaloonTest extends TestCase
         /** @var ExchangeRate $rate */
         $rate = ExchangeRate::firstOrFail();
 
-        self::assertSame(CurrencyEnum::RUB, $rate->{ExchangeRate::COLUMN_CURRENCY_FROM});
-        self::assertSame(CurrencyEnum::CAD, $rate->{ExchangeRate::COLUMN_CURRENCY_TO});
+        self::assertSame(CurrencyEnum::RUB, $rate->{ExchangeRate::COLUMN_CURRENCY_TO});
+        self::assertSame(CurrencyEnum::CAD, $rate->{ExchangeRate::COLUMN_CURRENCY_FROM});
         self::assertSame(78.1241, $rate->{ExchangeRate::COLUMN_RATE});
         self::assertSame('2026-09-08', $rate->{ExchangeRate::COLUMN_DATE}->format('Y-m-d'));
     }
@@ -161,8 +161,8 @@ final class SaloonTest extends TestCase
         /** @var ExchangeRate $rate */
         $rate = ExchangeRate::firstOrFail();
 
-        self::assertSame(CurrencyEnum::RUB, $rate->{ExchangeRate::COLUMN_CURRENCY_FROM});
-        self::assertSame(CurrencyEnum::CAD, $rate->{ExchangeRate::COLUMN_CURRENCY_TO});
+        self::assertSame(CurrencyEnum::RUB, $rate->{ExchangeRate::COLUMN_CURRENCY_TO});
+        self::assertSame(CurrencyEnum::CAD, $rate->{ExchangeRate::COLUMN_CURRENCY_FROM});
         self::assertSame(78.1241, $rate->{ExchangeRate::COLUMN_RATE});
         self::assertSame('2026-09-08', $rate->{ExchangeRate::COLUMN_DATE}->format('Y-m-d'));
     }
@@ -186,18 +186,18 @@ final class SaloonTest extends TestCase
         $this->assertDatabaseCount($exchangeRateTable, 2);
 
         /** @var ExchangeRate $rateCad */
-        $rateCad = ExchangeRate::where('currency_to', CurrencyEnum::CAD)->firstOrFail();
+        $rateCad = ExchangeRate::where(ExchangeRate::COLUMN_CURRENCY_FROM, CurrencyEnum::CAD)->firstOrFail();
 
-        self::assertSame(CurrencyEnum::RUB, $rateCad->{ExchangeRate::COLUMN_CURRENCY_FROM});
-        self::assertSame(CurrencyEnum::CAD, $rateCad->{ExchangeRate::COLUMN_CURRENCY_TO});
+        self::assertSame(CurrencyEnum::RUB, $rateCad->{ExchangeRate::COLUMN_CURRENCY_TO});
+        self::assertSame(CurrencyEnum::CAD, $rateCad->{ExchangeRate::COLUMN_CURRENCY_FROM});
         self::assertSame(78.1241, $rateCad->{ExchangeRate::COLUMN_RATE});
         self::assertSame('2026-09-08', $rateCad->{ExchangeRate::COLUMN_DATE}->format('Y-m-d'));
 
         /** @var ExchangeRate $rateByn */
-        $rateByn = ExchangeRate::where('currency_to', CurrencyEnum::BYN)->firstOrFail();
+        $rateByn = ExchangeRate::where(ExchangeRate::COLUMN_CURRENCY_FROM, CurrencyEnum::BYN)->firstOrFail();
 
-        self::assertSame(CurrencyEnum::RUB, $rateByn->{ExchangeRate::COLUMN_CURRENCY_FROM});
-        self::assertSame(CurrencyEnum::BYN, $rateByn->{ExchangeRate::COLUMN_CURRENCY_TO});
+        self::assertSame(CurrencyEnum::RUB, $rateByn->{ExchangeRate::COLUMN_CURRENCY_TO});
+        self::assertSame(CurrencyEnum::BYN, $rateByn->{ExchangeRate::COLUMN_CURRENCY_FROM});
         self::assertSame(28.9898, $rateByn->{ExchangeRate::COLUMN_RATE});
         self::assertSame('2026-09-08', $rateByn->{ExchangeRate::COLUMN_DATE}->format('Y-m-d'));
     }
@@ -210,8 +210,8 @@ final class SaloonTest extends TestCase
 
         $exchangeRate = ExchangeRate::factory()->create(
             [
-                ExchangeRate::COLUMN_CURRENCY_FROM => CurrencyEnum::RUB,
-                ExchangeRate::COLUMN_CURRENCY_TO => CurrencyEnum::CAD,
+                ExchangeRate::COLUMN_CURRENCY_FROM => CurrencyEnum::CAD,
+                ExchangeRate::COLUMN_CURRENCY_TO => CurrencyEnum::RUB,
                 ExchangeRate::COLUMN_RATE => 12.24,
                 ExchangeRate::COLUMN_DATE => CarbonImmutable::create(2026, 9, 8),
             ],

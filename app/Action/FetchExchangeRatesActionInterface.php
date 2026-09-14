@@ -2,7 +2,7 @@
 
 namespace App\Action;
 
-interface ActionInterface
+interface FetchExchangeRatesActionInterface
 {
     public function execute(): void;
 }
