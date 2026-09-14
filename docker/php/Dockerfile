@@ -1,63 +1,49 @@
-FROM dunglas/frankenphp:1.9.1-php8.4.15-trixie AS base
-
-RUN apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    git=1:2.47.3-0+deb13u1 \
-    unzip=6.0-29+deb13u1 \
-    librabbitmq-dev=0.15.0-1+deb13u2 \
-    supervisor=4.2.5-3 \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+FROM dunglas/frankenphp:php8.4 AS builder
+WORKDIR "/application"
 
 RUN install-php-extensions \
-    pcntl \
-    opcache \
-    pdo \
-    pdo_pgsql \
-    redis \
-    zip \
-    intl
+	pdo_mysql \
+	zip \
+	bcmath \
+	sockets
 
-WORKDIR /app
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
+FROM builder AS vendor
 
-COPY ./.docker/php/php.ini /usr/local/etc/php/php.ini
+COPY ./composer.json ./composer.lock ./
 
-FROM base AS dev
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends git unzip \
+ && rm -rf /var/lib/apt/lists/* \
+ && composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts
 
-RUN pecl install xdebug  \
-    && docker-php-ext-enable xdebug
+FROM builder AS application
 
-COPY ./.docker/supervisor/supervisord.dev.conf /etc/supervisor/conf.d/supervisord.conf
+COPY --from=vendor /application/vendor ./vendor
+COPY . .
 
-CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+RUN mkdir -p \
+  ./storage/framework/cache/data \
+  ./storage/framework/sessions \
+  ./storage/framework/views \
+  ./storage/logs \
+  ./storage/app/public \
+  ./.scribe \
+  ./bootstrap/cache
+RUN composer dump-autoload --no-dev --optimize
+RUN chown -R www-data:www-data ./bootstrap/cache ./storage ./config ./.scribe
 
-FROM base AS simple
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD php -r "exit(@file_get_contents('https://localhost/up') === false ? 1 : 0);"
 
-RUN pecl install xdebug  \
-    && docker-php-ext-enable xdebug
+ENTRYPOINT []
 
-COPY ./.docker/supervisor/supervisord.simple.conf /etc/supervisor/conf.d/supervisord.conf
+FROM application AS dev
 
-CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+RUN install-php-extensions \
+	xdebug-3.5.1
 
-FROM base AS schedule
+FROM application AS queue
 
-COPY ./.docker/supervisor/supervisord.schedule.conf /etc/supervisor/conf.d/supervisord.conf
-
-CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
-
-FROM base AS queue
-
-COPY ./.docker/supervisor/supervisord.queue.conf /etc/supervisor/conf.d/supervisord.conf
-
-CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
-
-FROM base AS prod
-
-COPY ./.docker/php/php.prod.ini /usr/local/etc/php/php.ini
-
-COPY ./.docker/supervisor/supervisord.prod.conf /etc/supervisor/conf.d/supervisord.conf
-
-CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+FROM application AS schedule

@@ -1,88 +1,180 @@
-version: '3.1'
-services:
-    application:
-        build: docker/php
-        working_dir: /application
-        volumes:
-            - '.:/application'
-            - './docker/php/conf.d/99-overrides.ini:/etc/php/8.4/fpm/conf.d/99-overrides.ini'
-            - './docker/php/conf.d/99-overrides.ini:/etc/php/8.4/cli/conf.d/99-overrides.ini'
+x-application-base: &application-builder
+    build:
+        context: .
+        dockerfile: 'docker/php/Dockerfile'
+    working_dir: /application
+    env_file: .env
+    networks:
+        - 'private'
+    restart: unless-stopped
 
-    webserver:
-        image: 'dunglas/frankenphp:latest'
-        restart: always
-        working_dir: /application
-        volumes:
-            - '.:/application'
-            - './docker/webserver/frankenphp/Caddyfile.d:/etc/frankenphp/Caddyfile.d'
+services:
+    application-migration:
+        <<: *application-builder
+
+        container_name: application-migration
+        command: php artisan migrate --force
+        restart: 'no'
+
+        depends_on:
+            mysql:
+                condition: service_healthy
+
+        healthcheck:
+            disable: true
+            test: ['NONE']
+
+    #application-scribe:
+    #    <<: *application-builder
+#
+    #    container_name: application-scribe
+    #    command: php artisan scribe:generate
+    #    restart: 'no'
+#
+    #    depends_on:
+    #        mysql:
+    #            condition: service_healthy
+#
+    #    healthcheck:
+    #        disable: true
+    #        test: ['NONE']
+
+    application:
+        <<: *application-builder
+
+        container_name: application
+        environment:
+            SERVER_NAME: 'test-saloon.local'
+            CADDY_GLOBAL_OPTIONS: 'debug'
+        command: frankenphp run --config /etc/frankenphp/Caddyfile
+
+        depends_on:
+            application-migration:
+                condition: service_completed_successfully
         ports:
-            - '80:80'
+            - '8080:80'
             - '443:443'
             - '443:443/udp'
+        volumes:
+            - '.:/application'
+            - 'caddy-data:/data'
+            - 'caddy-config:/data'
+            - './docker/php/conf.d/:/etc/php/8.4/fpm/conf.d/'
+            - './docker/php/conf.d/:/etc/php/8.4/cli/conf.d/'
+            - './docker/webserver/frankenphp/Caddyfile:/etc/frankenphp/Caddyfile'
+            - './docker/webserver/frankenphp/Caddyfile.d:/etc/frankenphp/Caddyfile.d'
+        networks:
+            - 'public'
+            - 'private'
+
+    queue:
+        <<: *application-builder
+
+        build:
+            context: .
+            dockerfile: 'docker/php/Dockerfile'
+            target: queue
+        container_name: application-queue
+        command: frankenphp php-cli ./artisan queue:work --sleep=3 --tries=3 --max-time=3600 --memory=32
+        restart: on-failure
+
         depends_on:
-            - application
-            - mysql
-            - rabbitmq
+            application-migration:
+                condition: service_completed_successfully
+            rabbitmq:
+                condition: service_healthy
+        volumes:
+            - '.:/application'
+
+        healthcheck:
+            disable: true
+            test: ['NONE']
+
+    #schedule:
+    #    <<: *application-builder
+    #
+    #    command: supercronic /etc/supercronic/laravel
+    #
+    #    healthcheck:
+    #        disable: true
+    #        test: ['NONE']
 
     mysql:
         image: 'mysql:8.0'
-        working_dir: /application
+        container_name: mysql
         volumes:
             - 'mysql-data:/var/lib/mysql/'
         environment:
-            - MYSQL_ROOT_PASSWORD=-
-            - MYSQL_DATABASE='${DB_DATABASE}'
-            - MYSQL_USER='${DB_USERNAME}'
-            - MYSQL_PASSWORD='${DB_PASSWORD}'
+            MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
+            MYSQL_DATABASE: '${DB_DATABASE}'
+            MYSQL_USER: '${DB_USERNAME}'
+            MYSQL_PASSWORD: '${DB_PASSWORD}'
+            MYSQL_ALLOW_EMPTY_PASSWORD: y
         ports:
-            - '42002:3306'
+            - '42002:${DB_PORT}'
+        networks:
+            - 'private'
         healthcheck:
-            test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
-            interval: 20s
+            test: ['CMD', 'mysql', '-u', '${DB_USERNAME}', '-p${DB_PASSWORD}', '--execute', 'SHOW DATABASES;']
+            interval: 30s
             timeout: 20s
-            retries: 5
+            retries: 8
 
-    elasticsearch:
-        image: 'elasticsearch:6.5.4'
-        volumes:
-            - 'elasticsearch-data:/var/lib/elasticsearch/'
-            - './docker/search/elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml'
-        ports:
-            - '9200:9200'
-        healthcheck:
-            test: ['CMD', 'curl -fs http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s || exit 1']
-            interval: 10s
-            timeout: 5s
-            retries: 5
+    #elasticsearch:
+    #    image: 'elasticsearch:6.5.4'
+    #    container_name: elasticsearch
+    #    volumes:
+    #        - 'elasticsearch-data:/var/lib/elasticsearch/'
+    #        - './docker/search/elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml'
+    #    ports:
+    #        - '9200:${ELASTICSEARCH_PORT:-9200}'
+    #    networks:
+    #        - 'private'
+    #    healthcheck:
+    #        test: ['CMD-SHELL', 'curl -fs http://localhost:${ELASTICSEARCH_PORT:-9200}/_cluster/health?wait_for_status=yellow&timeout=5s || exit 1']
+    #        interval: 10s
+    #        timeout: 5s
+    #        retries: 5
+    #        start_period: 20s
 
-    clickhouse:
-        image: 'clickhouse/clickhouse-server:latest'
-        volumes:
-            - 'clickhouse-data:/var/lib/clickhouse/'
-            - './docker/database/clickhouse/config.xml:/etc/clickhouse-server/config.d/docker.xml'
-            - './docker/database/clickhouse/users.xml:/etc/clickhouse-server/users.d/docker.xml'
-        ulimits:
-            nofile:
-                soft: 262144
-                hard: 262144
-        healthcheck:
-            test: ['CMD', 'clickhouse-client', '--query', 'SELECT 1']
-            interval: 10s
-            timeout: 10s
-            retries: 3
+    #clickhouse:
+    #    image: 'clickhouse/clickhouse-server:26.7'
+    #    container_name: clickhouse
+    #    ports:
+    #        - '8123:${CLICKHOUSE_PORT:-8123}'
+    #    volumes:
+    #        - 'clickhouse-data:/var/lib/clickhouse/'
+    #        - './docker/database/clickhouse/config.xml:/etc/clickhouse-server/config.d/docker.xml'
+    #        - './docker/database/clickhouse/users.xml:/etc/clickhouse-server/users.d/docker.xml'
+    #    ulimits:
+    #        nofile:
+    #            soft: 262144
+    #            hard: 262144
+    #    networks:
+    #        - 'private'
+    #    healthcheck:
+    #        test: ['CMD', 'clickhouse-client', '--query', 'SELECT 1']
+    #        interval: 10s
+    #        timeout: 10s
+    #        retries: 3
 
     rabbitmq:
-        image: 'rabbitmq:3-management'
+        image: 'rabbitmq:4.3-management'
         container_name: rabbitmq
         environment:
-            - RABBITMQ_NODENAME='rabbit@rabbitmq'
-            - RABBITMQ_CONFIG_FILE='/etc/rabbitmq/rabbitmq.conf'
+            RABBITMQ_NODENAME: 'rabbit@rabbitmq'
+            RABBITMQ_CONFIG_FILE: '/etc/rabbitmq/rabbitmq.conf'
+            RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+            RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+            RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST}
         volumes:
             - 'rabbitmq-data:/var/lib/rabbitmq/'
             - './docker/queue/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf'
         ports:
-            - '5672:5672'
+            - '5672:${RABBITMQ_PORT:-5672}'
             - '15672:15672'
+        networks:
+            - 'private'
         healthcheck:
             test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping']
             interval: 30s
@@ -94,3 +186,10 @@ volumes:
     elasticsearch-data:
     rabbitmq-data:
     clickhouse-data:
+    caddy-data:
+    caddy-config:
+
+networks:
+    public:
+    private:
+        driver: bridge

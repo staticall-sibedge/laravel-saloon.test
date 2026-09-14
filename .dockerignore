@@ -1,0 +1,34 @@
+# Laravel dependencies
+/vendor
+
+# Laravel caches & logs
+/storage
+/bootstrap/cache
+/.scribe
+
+# Frontend
+/public/build
+
+# Environment files
+.env
+.env.*
+
+# Logs & temporary files
+*.log
+*.pid
+*.seed
+*.sqlite
+*.gz
+
+# OS & IDE files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.bak
+
+# Git metadata
+.git
+
+# Docker config overrides
+docker-compose.override.yml
